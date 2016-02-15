@@ -1,13 +1,12 @@
 package model;
 
-import java.util.List;
+import java.util.Map;
 
 import model.enums.SongKey;
-import model.enums.NoteDuration;
 
 public class Song {
 	// The song id.
-	private int index;
+	private Integer index;
 	
 	// The song title.
 	private String title;
@@ -15,17 +14,25 @@ public class Song {
 	// The song composer.
 	private String composer;
 	
-	// The default note duration.  Used when determining the 
-	private NoteDuration noteDuration;
-	private String meter;
-	private int tempo;
-	private SongKey key;
-	private List<Voice> voices;
+	// The default note duration.  Used when determining the actual duration of parsed notes.
+	private Double noteDuration;
 	
-	public int getIndex() {
+	// Defines what the sum of all note durations in a bar should be.
+	private Meter meter;
+	
+	// Defines the number of default durations notes per minute.
+	private Integer tempo;
+	
+	// Defines which notes are naturally flat or sharp.
+	private SongKey key;
+	
+	// The list of voices for this song mapped by their name.  Defaults to one if none are defined.
+	private Map<String, Voice> voices;
+	
+	public Integer getIndex() {
 		return index;
 	}
-	public void setIndex(int index) {
+	public void setIndex(Integer index) {
 		this.index = index;
 	}
 	
@@ -43,24 +50,24 @@ public class Song {
 		this.composer = composer;
 	}
 
-	public NoteDuration getNoteDuration() {
+	public Double getNoteDuration() {
 		return noteDuration;
 	}
-	public void setNoteDuration(NoteDuration noteDuration) {
+	public void setNoteDuration(Double noteDuration) {
 		this.noteDuration = noteDuration;
 	}
 	
-	public String getMeter() {
+	public Meter getMeter() {
 		return meter;
 	}
-	public void setMeter(String meter) {
+	public void setMeter(Meter meter) {
 		this.meter = meter;
 	}
 	
-	public int getTempo() {
+	public Integer getTempo() {
 		return tempo;
 	}
-	public void setTempo(int tempo) {
+	public void setTempo(Integer tempo) {
 		this.tempo = tempo;
 	}
 	
@@ -71,10 +78,15 @@ public class Song {
 		this.key = key;
 	}
 	
-	public List<Voice> getVoices() {
+	public Map<String, Voice> getVoices() {
 		return voices;
 	}
-	public void setVoices(List<Voice> voices) {
+	public void setVoices(Map<String, Voice> voices) {
 		this.voices = voices;
+	}
+	
+	public Song withVoices(Map<String, Voice> voices) {
+		setVoices(voices);
+		return this;
 	}
 }
