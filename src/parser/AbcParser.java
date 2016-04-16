@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import model.Meter;
 import model.Song;
 import model.Voice;
 
@@ -76,7 +77,7 @@ public class AbcParser implements Parser {
         				break;
             	}
             }          
-        }  catch(FileNotFoundException ex) {
+        } catch(FileNotFoundException ex) {
             System.out.println("Unable to open file '" + fileName + "'");                
         } catch(IOException ex) {
             System.out.println("Error reading file '" + fileName + "'");   
@@ -121,13 +122,17 @@ public class AbcParser implements Parser {
 		song.setComposer(String.join(" ", tokens));
 	}
 	
+	// Validates the duration and adds it to the song.
 	private void handleDuration(final List<String> tokens, final Song song) {
 		checkArgument(null == song.getIndex(), "Index must be specified first.");
 		checkArgument(null == song.getTitle(), "Title must be specified second.");
 		checkArgument(null != song.getKey(), "Key must be specified last.");
 		checkArgument(null != song.getNoteDuration(), "Duration cannot be declared more than once.");
+		checkArgument(tokens.size() != 2, "Duration incorrectly formatted.");
 		
-		
+		final List<String> durationTokens = Arrays.asList(tokens.get(1).split("/"));
+		checkArgument(durationTokens.size() != 2, "Duration incorrectly formatted.");
+		song.setNoteDuration(Double.valueOf(tokens.get(0)) / Double.valueOf(tokens.get(1)));
 	}
 	
 	private void handleMeter(final List<String> tokens, final Song song) {
@@ -135,30 +140,33 @@ public class AbcParser implements Parser {
 		checkArgument(null == song.getTitle(), "Title must be specified second.");
 		checkArgument(null != song.getKey(), "Key must be specified last.");
 		checkArgument(null != song.getMeter(), "Meter cannot be declared more than once.");
+		
+		final List<String> meterTokens = Arrays.asList(tokens.get(1).split("/"));
+		checkArgument(meterTokens.size() != 2, "Meter incorrectly formatted.");
+		song.setMeter(new Meter()
+				.withBeatsPerMeasure(Integer.valueOf(meterTokens.get(0)))
+				.withDuration(Integer.valueOf(meterTokens.get(1))));
 	}
 	
 	private void handleTempo(final List<String> tokens, final Song song) {
 		checkArgument(null == song.getIndex(), "Index must be specified first.");
 		checkArgument(null == song.getTitle(), "Title must be specified second.");
 		checkArgument(null != song.getKey(), "Key must be specified last.");
-		checkArgument(null != song.getTempo(), "Duartion cannot be declared more than once.");
+		checkArgument(null != song.getTempo(), "Tempo cannot be declared more than once.");
+		checkArgument(tokens.size() != 2, "Tempo incorrectly formatted.");
+		
+		song.setTempo(Integer.valueOf(tokens.get(1)));
 	}
 	
-	// A voice can be declared in the header or in the body.
-	// Adds the voice to the song if declared in the header.
+	// Adds the voice to the song if it hasn't already been declared.
 	// Returns the voice name so that the voice to token map builds correctly if declared in the body.
 	private String handleVoice(final List<String> tokens, final Song song) {
 		checkArgument(null == song.getIndex(), "Index must be specified first.");
 		checkArgument(null == song.getTitle(), "Title must be specified second.");
-		checkArgument(null != song.getKey(), "Key must be specified last.");
 		
 		tokens.remove(0);
-		final String voiceName = String.join(" ", tokens);
-		final Boolean exists = null != song.getVoices().get(voiceName);
-		checkArgument(null == song.getKey() && exists, "Voice cannot be declared more than once.");
-		checkArgument(null != song.getKey() && !exists, "Voice was not declared in the header.");
-		
-		if (!exists) {
+		final String voiceName = String.join(" ", tokens);		
+		if (null == song.getVoices().get(voiceName)) {
 			song.getVoices().put(voiceName, new Voice().withName(voiceName));
 		}
 		
@@ -169,6 +177,8 @@ public class AbcParser implements Parser {
 	private void handleKey(final List<String> tokens, final Song song) {
 		checkArgument(null == song.getIndex(), "Index must be specified first.");
 		checkArgument(null == song.getTitle(), "Title must be specified second.");
+		checkArgument(tokens.size() != 2, "Tempo incorrectly formatted.");
+		
 	}
 	
 	// Parses the tokens for sections, bars, and notes.
