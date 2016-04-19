@@ -1,5 +1,8 @@
 package model;
 
+/**
+ * A representation of how many beats are in a measure.
+ */
 public class Meter {
 	// The upper part of the meter, specifying how many beats are in each measure.
 	private Integer beatsPerMeasure;
@@ -25,7 +28,7 @@ public class Meter {
 		return this;
 	}
 	public Meter withDuration(Integer duration) {
-		setDuration(beatsPerMeasure);
+		setDuration(duration);
 		return this;
 	}
 }

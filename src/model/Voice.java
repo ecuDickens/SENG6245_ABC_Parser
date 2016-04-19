@@ -2,51 +2,24 @@ package model;
 
 import java.util.List;
 
+/**
+ * A representation of a single musical track in a song.  Iterating over the measures and following the bar types will
+ * result in the track being played appropriately.
+ */
 public class Voice {
-	// The parent song the voice belongs to.
-	private Song song;
-	
-	// The name of the song.
-	private String name;
-	
-	// This list of sections belonging to this song.
-	private List<Section> sections;
 
-	public Song getSong() {
-		return song;
-	}
-	public void setSong(Song song) {
-		this.song = song;
-	}
+	// This list of measures belonging to this voice.
+	private List<Measure> measures;
 	
-	public String getName() {
-		return name;
+	public List<Measure> getMeasures() {
+		return measures;
 	}
-	public void setName(String name) {
-		this.name = name;
+	public void setMeasures(List<Measure> measures) {
+		this.measures = measures;
 	}
-	
-	public List<Section> getSections() {
-		return sections;
-	}
-	public void setSections(List<Section> sections) {
-		this.sections = sections;
-	}
-	
-	public Voice withSong(Song song) {
-		setSong(song);
-		return this;
-	}
-	public Voice withName(String name) {
-		setName(name);
-		return this;
-	}
-	public Voice withType(Song song) {
-		setSong(song);
-		return this;
-	}
-	public Voice withSections(List<Section> sections) {
-		setSections(sections);
+
+	public Voice withMeasures(List<Measure> sections) {
+		setMeasures(sections);
 		return this;
 	}
 }
