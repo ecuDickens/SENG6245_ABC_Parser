@@ -408,7 +408,8 @@ public class AbcParser implements Parser {
                 chars.remove(0);
                 final List<MeasureEntity> entities = toEntities(toString(chars));
                 checkArgument(entities.size() != entityCount, "Tuplet is invalid");
-                return new Tuplet().withDurationMultiplier(2.0).withEntities(entities);
+                // A tuplet's duration is either 2 notes over 3 beats, 3 notes over 2 beats, or 4 notes over 3 beats.
+                return new Tuplet().withDurationMultiplier(3 == entities.size() ? 2.0 : 3.0).withEntities(entities);
             case BAR:
                 final BarLineEnum barLineEnum = chars.size() == 1 ? STANDARD :
                         REPEAT_CHAR.equals(chars.get(0)) && BAR_CHAR.equals(chars.get(1)) ? REPEAT_END :

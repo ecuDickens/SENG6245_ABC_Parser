@@ -36,4 +36,11 @@ public class Meter {
     public String toString() {
         return beatsPerMeasure + "/" + duration;
     }
+
+    @Override
+    public boolean equals(final Object obj) {
+        return null != obj && obj instanceof Meter &&
+                ((Meter) obj).getBeatsPerMeasure().equals(beatsPerMeasure) &&
+                ((Meter) obj).getDuration().equals(duration);
+    }
 }

@@ -17,10 +17,12 @@ import static model.enums.Key.keyToSharps;
  */
 public class MeasureKey {
 
+    private Key key;
     private List<NoteEnum> flats;
     private List<NoteEnum> sharps;
 
     public MeasureKey(final Key key) {
+        this.key = key;
         this.flats = keyToFlats.get(key);
         this.sharps = keyToSharps.get(key);
     }
@@ -28,5 +30,9 @@ public class MeasureKey {
     public Accidental getAccidental(final Note note) {
         return null != flats && flats.contains(note.getNoteEnum()) ? FLAT :
                null != sharps && sharps.contains(note.getNoteEnum()) ? SHARP : null;
+    }
+
+    public Key getKey() {
+        return key;
     }
 }

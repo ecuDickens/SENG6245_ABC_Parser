@@ -38,7 +38,7 @@ public class MidiPlayer implements Player {
 
 	@Override
 	public void play(final Song song) throws MidiUnavailableException, InvalidMidiDataException {
-        System.out.println("Playing " + song.getTitle());
+        System.out.println("Loading " + song.getTitle());
 
         // Always set the sequence to 8 ticks per quarter note, allowing for 32nd note granularity.
         final Sequence sequence = new Sequence(PPQ, TICKS_PER_QUARTER_NOTE);
@@ -61,9 +61,11 @@ public class MidiPlayer implements Player {
             Measure currentMeasure = entry.getValue().getMeasures().get(0);
             MeasureKey key = currentMeasure.getKey();
             while(true) {
-                if (setTempo && null != currentMeasure.getTempo() && sequencer.getTempoInBPM() != currentMeasure.getTempo()) {
+                if (setTempo && null != currentMeasure.getTempo()) {
                     System.out.println("Setting tempo to " + currentMeasure.getTempo());
-                    addTempoEvent(currentMeasure.getTempo(), tick);
+                    // sequencer.setTempoInBPM doesn't seem to work for multiple tempo changes.  Have to add an event at the appropriate time tick.
+                    // Also, if the default length is not a quarter note, need to scale the tempo to match.
+                    addTempoEvent(currentMeasure.getTempo(), currentMeasure.getLastNoteDuration(), tick);
                 }
                 final Map<NoteEnum, Accidental> overrideTracker = new HashMap<>();
 
@@ -100,11 +102,13 @@ public class MidiPlayer implements Player {
             setTempo = false;
         }
 
+        System.out.println("Playing " + song.getTitle());
         sequencer.start();
         while (sequencer.isRunning()) {
             Thread.yield();
         }
         sequencer.close();
+        System.out.println("Done");
 	}
 
     private Integer handleEntity(final MeasureEntity entity, final Map<NoteEnum, Accidental> overrideTracker, final MeasureKey key, final Double defaultNoteDuration, final Integer tick) {
@@ -177,9 +181,12 @@ public class MidiPlayer implements Player {
         track.add(event);
     }
 
-    private void addTempoEvent(final int tempo, final int tick) throws InvalidMidiDataException {
+    private void addTempoEvent(final int tempo, final double defaultDuration, final int tick) throws InvalidMidiDataException {
+        // scale by the note duration divided by the default duration (since tempo is given in eighth note beats per minute).
+        final double scaledTempo = (double) tempo * (defaultDuration / 0.125);
+
         // from http://www.programcreek.com/java-api-examples/index.php?api=javax.sound.midi.MetaMessage
-        final int mpq = 60000000 / tempo;
+        final int mpq = 60000000 / (int) scaledTempo;
         final MetaMessage tempoMsg = new MetaMessage();
         tempoMsg.setMessage(0x51,new byte[] {
                 (byte)(mpq>>16 & 0xff),
