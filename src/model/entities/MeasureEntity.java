@@ -15,4 +15,9 @@ public class MeasureEntity {
     public void setDurationMultiplier(Double durationMultiplier) {
         this.durationMultiplier = durationMultiplier;
     }
+
+    public MeasureEntity withDurationMultiplier(final Double durationMultiplier) {
+        setDurationMultiplier(durationMultiplier);
+        return this;
+    }
 }

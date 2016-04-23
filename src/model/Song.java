@@ -45,8 +45,12 @@ public class Song {
 	public void setVoices(Map<String, Voice> voices) {
 		this.voices = voices;
 	}
-	
-	public Song withVoices(Map<String, Voice> voices) {
+
+    public Song withComposer(final String composer) {
+        setComposer(composer);
+        return this;
+    }
+    public Song withVoices(Map<String, Voice> voices) {
 		setVoices(voices);
 		return this;
 	}

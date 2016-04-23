@@ -17,7 +17,8 @@ public class Chord extends MeasureEntity {
         this.notes = notes;
     }
 
-    public Chord withDuration(final Double duration) {
+    @Override
+    public Chord withDurationMultiplier(final Double duration) {
         setDurationMultiplier(duration);
         return this;
     }

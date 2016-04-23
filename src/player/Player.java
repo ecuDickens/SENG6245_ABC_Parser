@@ -11,10 +11,5 @@ public interface Player {
      *
      * @param song the song to load.
      */
-	void loadSong(Song song) throws MidiUnavailableException, InvalidMidiDataException;
-
-    /**
-     * Plays the loaded song.
-     */
-	void play() throws MidiUnavailableException;
+	void play(Song song) throws MidiUnavailableException, InvalidMidiDataException;
 }

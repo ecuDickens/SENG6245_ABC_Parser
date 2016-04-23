@@ -31,4 +31,9 @@ public class Meter {
 		setDuration(duration);
 		return this;
 	}
+
+    @Override
+    public String toString() {
+        return beatsPerMeasure + "/" + duration;
+    }
 }

@@ -46,8 +46,9 @@ public class Note extends MeasureEntity {
         setOctave(octave);
         return this;
     }
-    public Note withDuration(final Double duration) {
-        setDurationMultiplier(duration);
+    @Override
+    public Note withDurationMultiplier(final Double durationMultiplier) {
+        setDurationMultiplier(durationMultiplier);
         return this;
     }
     public Note withAccidental(final Accidental accidental) {

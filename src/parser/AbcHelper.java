@@ -1,5 +1,6 @@
 package parser;
 
+import model.Meter;
 import model.enums.Key;
 import model.enums.NoteEnum;
 
@@ -42,6 +43,17 @@ public class AbcHelper {
     public static final Character TUPLET_START_CHAR = '(';
     public static final Character REPEAT_CHAR = ':';
     public static final Character BAR_CHAR = '|';
+    public static final Character BROKEN_RHYTHM_FORWARD = '<';
+    public static final Character BROKEN_RHYTHM_BACK = '>';
+
+    // Characters that denote the start of a new entity.
+    public static final Set<Character> NEW_ENTITY_CHARS = Stream.of('a', 'b', 'c', 'd', 'e', 'f', 'g', 'A', 'B', 'C', 'D', 'E', 'F', 'G', SHARP_CHAR, FLAT_CHAR, NATURAL_CHAR, CHORD_OR_ALT_START_CHAR, REST_CHAR, TUPLET_START_CHAR, BAR_CHAR, REPEAT_CHAR, BROKEN_RHYTHM_FORWARD, BROKEN_RHYTHM_BACK).collect(toSet());
+
+    public static final Double STANDARD_NOTE_DURATION = 0.125; // Eighth note
+    public static final Integer STANDARD_TEMPO = 100;
+    public static final Meter STANDARD_METER = new Meter().withBeatsPerMeasure(4).withDuration(4);
+    public static final String STANDARD_VOICE = "Default";
+    public static final String STANDARD_COMPOSER = "Unknown";
 
     // The map of key strings to key.
     public static Map<String, Key> stringToKey;
@@ -100,7 +112,7 @@ public class AbcHelper {
         characterToNote.put('g', G);
     }
 
-    // Returns the number of chords and notes in the given string.  Notes inside of chords are not counted.
+    // Returns the number of complete chord and note characters in the given list.  Notes inside of chords are not counted.
     public static int countNotesAndChords(final List<Character> entityChars) {
         int count = 0;
         boolean withinChord = false;

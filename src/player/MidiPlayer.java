@@ -10,9 +10,11 @@ import model.entities.Note;
 import model.entities.Rest;
 import model.entities.Tuplet;
 import model.enums.Accidental;
+import model.enums.BarLineEnum;
 import model.enums.NoteEnum;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
@@ -32,29 +34,36 @@ public class MidiPlayer implements Player {
     private Track track;
 
     // Any note durations need to be multiplied by this to get the actual tick duration.
-    private static int TICKS_PER_QUARTER_NOTE = 8;
+    private static int TICKS_PER_QUARTER_NOTE = 16;
 
 	@Override
-	public void loadSong(final Song song) throws MidiUnavailableException, InvalidMidiDataException {
+	public void play(final Song song) throws MidiUnavailableException, InvalidMidiDataException {
+        System.out.println("Playing " + song.getTitle());
+
         // Always set the sequence to 8 ticks per quarter note, allowing for 32nd note granularity.
         final Sequence sequence = new Sequence(PPQ, TICKS_PER_QUARTER_NOTE);
         track = sequence.createTrack();
 
         sequencer = MidiSystem.getSequencer();
         sequencer.setSequence(sequence);
+        sequencer.open();
 
         // Iterate through each voice, adding notes to the track.
-        for (Voice voice : song.getVoices().values()) {
-            if (voice.getMeasures().isEmpty()) {
+        boolean setTempo = true; // only need to set the tempo from the first voice.  All other voices should have the same tempo.
+        for (Map.Entry<String, Voice> entry : song.getVoices().entrySet()) {
+            System.out.println("Adding voice " + entry.getKey() + " to track");
+            if (entry.getValue().getMeasures().isEmpty()) {
                 continue;
             }
 
             int tick = 0;
-            Measure currentMeasure = voice.getMeasures().get(0);
+            int endingIndex = 1; // as in, the first time through.  Will match with the alternate ending count when reached.
+            Measure currentMeasure = entry.getValue().getMeasures().get(0);
             MeasureKey key = currentMeasure.getKey();
             while(true) {
-                if (null != currentMeasure.getTempo()) {
-                    sequencer.setTempoInBPM(currentMeasure.getTempo());
+                if (setTempo && null != currentMeasure.getTempo() && sequencer.getTempoInBPM() != currentMeasure.getTempo()) {
+                    System.out.println("Setting tempo to " + currentMeasure.getTempo());
+                    addTempoEvent(currentMeasure.getTempo(), tick);
                 }
                 final Map<NoteEnum, Accidental> overrideTracker = new HashMap<>();
 
@@ -64,9 +73,38 @@ public class MidiPlayer implements Player {
                 if (null == currentMeasure.getNextMeasure()) {
                     break;
                 }
-                currentMeasure = currentMeasure.getNextMeasure();
+
+                // If we've reached a repeat, go back to the section start and increment the counter.
+                if (currentMeasure.getEndLine() == BarLineEnum.REPEAT_END) {
+                    if (endingIndex == 1) {
+                        currentMeasure = currentMeasure.getSectionStart();
+                        System.out.println("Repeating back to measure " + currentMeasure.getIndex());
+                        endingIndex++;
+                    } else {
+                        currentMeasure = currentMeasure.getNextMeasure();
+                        endingIndex--;
+                    }
+                }
+                // If we've reached an alternate ending, go to the appropriately numbered one.
+                else if (null != currentMeasure.getNextMeasure().getAlternateEnding()) {
+                    currentMeasure = currentMeasure.getNextAlternateEnding(endingIndex);
+                    System.out.println("Going to alternate ending " + endingIndex + " at measure " + currentMeasure.getIndex());
+                } else {
+                    currentMeasure = currentMeasure.getNextMeasure();
+                }
+
+                if (currentMeasure.getEndLine() == BarLineEnum.SECTION_END) {
+                    endingIndex = 1;
+                }
             }
+            setTempo = false;
         }
+
+        sequencer.start();
+        while (sequencer.isRunning()) {
+            Thread.yield();
+        }
+        sequencer.close();
 	}
 
     private Integer handleEntity(final MeasureEntity entity, final Map<NoteEnum, Accidental> overrideTracker, final MeasureKey key, final Double defaultNoteDuration, final Integer tick) {
@@ -87,7 +125,8 @@ public class MidiPlayer implements Player {
             final Chord chord = (Chord) entity;
             final int duration = getDurationTick(chord.getDurationMultiplier(), defaultNoteDuration);
             for (Note note : chord.getNotes()) {
-                handleEntity(note, overrideTracker, key, defaultNoteDuration, tick);
+                // Ensure the notes are all the same duration.
+                handleEntity(note.withDurationMultiplier(chord.getDurationMultiplier()), overrideTracker, key, defaultNoteDuration, tick);
             }
             return duration;
         }
@@ -98,7 +137,8 @@ public class MidiPlayer implements Player {
             final int increment = duration / tuplet.getEntities().size();
             int tupletTick = tick;
             for (MeasureEntity tupletEntity : tuplet.getEntities()) {
-                handleEntity(tupletEntity, overrideTracker, key, defaultNoteDuration, tupletTick);
+                // Ensure each entity doesn't overlap in duration.
+                handleEntity(tupletEntity.withDurationMultiplier(tuplet.getDurationMultiplier()/tuplet.getEntities().size()), overrideTracker, key, defaultNoteDuration, tupletTick);
                 tupletTick += increment;
             }
             return duration;
@@ -116,8 +156,7 @@ public class MidiPlayer implements Player {
     }
 
     private int getDurationTick(final Double noteMultiplier, final Double defaultNoteDuration) {
-        final Double actualDuration = defaultNoteDuration * noteMultiplier;
-        final Double durationTick = actualDuration * TICKS_PER_QUARTER_NOTE * 4;
+        final Double durationTick = defaultNoteDuration * noteMultiplier * TICKS_PER_QUARTER_NOTE * 8; // ex. a quarter note (0.25) * 8 * 8 = 16 ticks.
         return durationTick.intValue();
     }
 
@@ -138,13 +177,15 @@ public class MidiPlayer implements Player {
         track.add(event);
     }
 
-	@Override
-	public void play() throws MidiUnavailableException {
-        sequencer.open();
-        sequencer.start();
-        while (sequencer.isRunning()) {
-            Thread.yield();
-        }
-        sequencer.close();
-	}
+    private void addTempoEvent(final int tempo, final int tick) throws InvalidMidiDataException {
+        // from http://www.programcreek.com/java-api-examples/index.php?api=javax.sound.midi.MetaMessage
+        final int mpq = 60000000 / tempo;
+        final MetaMessage tempoMsg = new MetaMessage();
+        tempoMsg.setMessage(0x51,new byte[] {
+                (byte)(mpq>>16 & 0xff),
+                (byte)(mpq>>8 & 0xff),
+                (byte)(mpq & 0xff)
+        },3);
+        track.add(new MidiEvent(tempoMsg, tick));
+    }
 }

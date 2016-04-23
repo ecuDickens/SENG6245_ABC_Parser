@@ -21,6 +21,7 @@ import static model.enums.NoteEnum.G;
 public class MidiHelper {
 
     public static final int OCTAVE = 12;
+    public static final int BASE_PITCH = 60;
 
     public static final Map<NoteEnum, Integer> noteToPitch;
     static {
@@ -45,6 +46,6 @@ public class MidiHelper {
 
     public static int getPitch(final Note note, final Accidental accidental) {
         final int accidentalPitch = null != accidental ? accidentalToPitch.get(accidental) : 0;
-        return noteToPitch.get(note.getNoteEnum()) + accidentalPitch + OCTAVE * note.getOctave() + 60;
+        return noteToPitch.get(note.getNoteEnum()) + accidentalPitch + OCTAVE * note.getOctave() + BASE_PITCH;
     }
 }

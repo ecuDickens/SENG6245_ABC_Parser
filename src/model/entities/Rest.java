@@ -5,8 +5,9 @@ package model.entities;
  */
 public class Rest extends MeasureEntity {
 
-    public Rest withDuration(final Double duration) {
-        setDurationMultiplier(duration);
+    @Override
+    public Rest withDurationMultiplier(final Double durationMultiplier) {
+        setDurationMultiplier(durationMultiplier);
         return this;
     }
 }

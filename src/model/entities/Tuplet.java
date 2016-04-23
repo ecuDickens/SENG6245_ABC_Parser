@@ -17,7 +17,8 @@ public class Tuplet extends MeasureEntity {
         this.entities = entities;
     }
 
-    public Tuplet withDuration(final Double duration) {
+    @Override
+    public Tuplet withDurationMultiplier(final Double duration) {
         setDurationMultiplier(duration);
         return this;
     }

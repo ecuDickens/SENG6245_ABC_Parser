@@ -13,6 +13,9 @@ import java.util.List;
  */
 public class Measure {
 
+    // Where the measure is in the song.
+    private Integer index;
+
     // The voice name that this measure belongs to.
     private String voiceName;
 
@@ -46,6 +49,13 @@ public class Measure {
 
 	// The list of notes, rests, tuplets, and chords contained in the measure.
 	private List<MeasureEntity> entities;
+
+    public Integer getIndex() {
+        return index;
+    }
+    public void setIndex(Integer index) {
+        this.index = index;
+    }
 
     public String getVoiceName() {
         return voiceName;
@@ -124,6 +134,10 @@ public class Measure {
         this.entities = entities;
     }
 
+    public Measure withIndex(final Integer index) {
+        setIndex(index);
+        return this;
+    }
     public Measure withVoiceName(final String voiceName) {
         setVoiceName(voiceName);
         return this;
@@ -208,5 +222,24 @@ public class Measure {
             throw new IllegalArgumentException("Duration was never set");
         }
         return previousMeasure.getLastNoteDuration();
+    }
+
+    // Follow the chain back to the beginning of the current section.
+    public Measure getSectionStart() {
+        // If we're at the beginning of the song or the beginning of the last section, return this.
+        if (null == previousMeasure || startLine == BarLineEnum.REPEAT_START || startLine == BarLineEnum.SECTION_END) {
+            return this;
+        }
+        return previousMeasure.getSectionStart();
+    }
+
+    public Measure getNextAlternateEnding(final int endingIndex) {
+        if (null != alternateEnding && endingIndex == alternateEnding.getEndingIndex()) {
+            return this;
+        }
+        if (null == nextMeasure) {
+            throw new IllegalArgumentException("Unable to find matching index " + endingIndex);
+        }
+        return nextMeasure.getNextAlternateEnding(endingIndex);
     }
 }

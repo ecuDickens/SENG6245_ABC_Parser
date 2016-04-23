@@ -9,5 +9,6 @@ public enum MeasureEntityEnum {
     CHORD,              // A set of notes played together.
     TUPLET,             // A set of notes and/or chords played evenly over a specified number of beats.
     BAR,                // A divider between measures.
-    ALTERNATE_ENDING    // Specifies whether a measure is the start of an alternate ending.
+    ALTERNATE_ENDING,   // Specifies whether a measure is the start of an alternate ending.
+    BROKEN_RHYTHM       // Specified whether the duration should be moved between two notes.
 }
